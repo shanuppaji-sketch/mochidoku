@@ -25,7 +25,7 @@ header{width:100%;display:flex;align-items:center;justify-content:space-between}
 .chip{width:26px;height:26px;border-radius:9px 9px 6px 6px;display:flex;align-items:center;justify-content:center;opacity:.35}
 .chip.done{opacity:1}
 .chip .dog{font-size:18px}
-#board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(9,1fr);gap:3px;background:var(--card);padding:6px;border-radius:14px;box-shadow:0 2px 8px #0001}
+#board{touch-action:none;width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(9,1fr);gap:3px;background:var(--card);padding:6px;border-radius:14px;box-shadow:0 2px 8px #0001}
 .c{border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer}
 .c{container-type:inline-size}
 .c .dog{font-size:66cqw}
@@ -193,7 +193,7 @@ function say(t){$('#msg').textContent=t}
 
 // ---------- board ----------
 const board=$('#board'),chips=$('#chips');
-for(let i=0;i<81;i++){const d=document.createElement('div');d.className='c';d.onclick=()=>tap(i);board.appendChild(d)}
+for(let i=0;i<81;i++){const d=document.createElement('div');d.className='c';d.dataset.i=i;board.appendChild(d)}
 for(let g=0;g<N;g++){const d=document.createElement('div');d.className='chip';d.style.background=COLORS[g];chips.appendChild(d)}
 
 function render(pop){
@@ -317,9 +317,33 @@ function restart(){
 $('#resetBtn').onclick=()=>{if(confirm('Restart this puzzle?'))restart()};
 $('#newBtn').onclick=()=>{if(confirm('Skip to a new puzzle?')){S=fresh(S.level,S.pw);save();render();say('')}};
 
+// pointer handling: tap toggles ✕, double-tap places a pup, and dragging paints ✕ (or erases) across cells
+let drag=null;
+function cellAt(e){
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  const c=el&&el.closest&&el.closest('.c');
+  return c?+c.dataset.i:-1;
+}
+board.addEventListener('pointerdown',e=>{
+  const i=cellAt(e);if(i<0)return;
+  e.preventDefault();
+  tap(i);
+  const m=S.mk[i];
+  if(!S.over&&m<2){drag={mode:m,changed:false};try{board.setPointerCapture(e.pointerId)}catch(_){}}
+});
+board.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  const i=cellAt(e);if(i<0)return;
+  const m=S.mk[i];
+  if(m<2&&m!==drag.mode){S.mk[i]=drag.mode;drag.changed=true;render()}
+});
+function endDrag(){if(drag&&drag.changed)save();drag=null}
+board.addEventListener('pointerup',endDrag);
+board.addEventListener('pointercancel',endDrag);
+
 if(!load())S=fresh(1);
 render();
-say('Tap to mark ✕ · double-tap to place a pup.');
+say('Tap or drag to mark ✕ · double-tap to place a pup.');
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
