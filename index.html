@@ -25,8 +25,8 @@ header{width:100%;display:flex;align-items:center;justify-content:space-between}
 .chip{width:26px;height:26px;border-radius:9px 9px 6px 6px;display:flex;align-items:center;justify-content:center;opacity:.35}
 .chip.done{opacity:1}
 .chip .dog{font-size:18px}
-#board{touch-action:none;width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(9,1fr);gap:3px;background:var(--card);padding:6px;border-radius:14px;box-shadow:0 2px 8px #0001}
-.c{border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer}
+#board{touch-action:none;width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(9,minmax(0,1fr));gap:3px;background:var(--card);padding:6px;border-radius:14px;box-shadow:0 2px 8px #0001}
+.c{min-width:0;min-height:0;overflow:hidden;border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer}
 .c{container-type:inline-size}
 .c .dog{font-size:66cqw}
 .c .x{width:55%;height:55%}
