@@ -1,4 +1,4 @@
-const CACHE = 'mochidoku-v12';
+const CACHE = 'mochidoku-v13';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './dog.png'];
 
 // Precache straight from the network, never from the HTTP cache (GitHub Pages sends max-age=600)
