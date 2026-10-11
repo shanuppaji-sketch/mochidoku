@@ -24,11 +24,11 @@ header{width:100%;display:flex;align-items:center;justify-content:space-between}
 #chips{display:flex;gap:6px;justify-content:center;background:var(--card);border-radius:16px 16px 0 0;padding:6px 12px;margin-bottom:-10px}
 .chip{width:26px;height:26px;border-radius:9px 9px 6px 6px;display:flex;align-items:center;justify-content:center;opacity:.35}
 .chip.done{opacity:1}
-.chip .dog{font-size:18px}
+.chip .dog{width:20px;height:20px;object-fit:contain}
 #board{touch-action:none;width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(9,minmax(0,1fr));gap:3px;background:var(--card);padding:6px;border-radius:14px;box-shadow:0 2px 8px #0001}
 .c{min-width:0;min-height:0;overflow:hidden;border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer}
 .c{container-type:inline-size}
-.c .dog{font-size:66cqw}
+.c .dog{width:82%;height:82%;object-fit:contain}
 .c .x{width:55%;height:55%}
 .c.bad{animation:shake .35s}
 .c.flash{animation:flash .5s 3}
@@ -39,13 +39,14 @@ header{width:100%;display:flex;align-items:center;justify-content:space-between}
 #power{display:flex;gap:28px;margin-top:6px}
 .pw{position:relative}
 .pw button{width:68px;height:68px;font-size:30px}
+.pw .dogbtn{width:42px;height:42px;object-fit:contain;vertical-align:middle}
 .pw span{position:absolute;top:-4px;right:-6px;background:#e5484d;color:#fff;font-size:13px;font-weight:700;border-radius:12px;min-width:24px;text-align:center;padding:2px 6px}
 .pw.zero button{opacity:.4}
 #msg{min-height:20px;font-size:14px;text-align:center}
 dialog{border:0;border-radius:18px;background:var(--card);color:var(--ink);text-align:center;padding:26px 30px}
 dialog::backdrop{background:#0006}
 dialog button{margin-top:14px;border:0;border-radius:12px;padding:10px 18px;font:inherit;font-weight:700;background:#f4a066;color:#fff}
-.dog{display:block;line-height:1;text-align:center;pointer-events:none}
+.dog{display:block;pointer-events:none}
 </style>
 </head>
 <body>
@@ -66,7 +67,7 @@ dialog button{margin-top:14px;border:0;border-radius:12px;padding:10px 18px;font
   <div id="board"></div>
   <div id="msg"></div>
   <div id="power">
-    <div class="pw" id="pwCat"><button class="round" title="Place a pup for me">🐶</button><span></span></div>
+    <div class="pw" id="pwCat"><button class="round" title="Place a pup for me"><img class="dogbtn" src="dog.png" alt="" draggable="false"></button><span></span></div>
     <div class="pw" id="pwHint"><button class="round" title="Show where to look">💡</button><span></span></div>
     <div class="pw" id="pwUndo"><button class="round" title="Undo last move">↩️</button><span></span></div>
   </div>
@@ -74,13 +75,15 @@ dialog button{margin-top:14px;border:0;border-radius:12px;padding:10px 18px;font
 <dialog id="dlg"><div id="dlgText" style="font-size:20px;font-weight:700"></div><button id="dlgBtn"></button></dialog>
 <script>
 // ---gen---
-const N=9;
+// grid size grows with level: 5x5 warm-up, then up to the full 9x9
+let N=9;
+const sizeFor=l=>Math.min(9,5+((l-1)>>1));
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
 function placeQueens(){
   const cols=[];
   (function go(r){
     if(r===N)return true;
-    for(const c of shuffle([0,1,2,3,4,5,6,7,8])){
+    for(const c of shuffle(Array.from({length:N},(_,i)=>i))){
       if(cols.slice(0,r).includes(c))continue;
       if(r>0&&Math.abs(cols[r-1]-c)<=1)continue;
       cols[r]=c;
@@ -147,7 +150,7 @@ function connectedWithout(reg,h,skip){
 function repair(reg,sol){
   let cur=countSolutions(reg,40);
   for(let it=0;it<1500&&cur>1;it++){
-    const i=Math.random()*81|0;
+    const i=Math.random()*N*N|0;
     if(sol.includes(i))continue;
     const r=i/N|0,c=i%N,opts=new Set();
     for(const[dr,dc]of[[1,0],[-1,0],[0,1],[0,-1]]){
@@ -176,27 +179,33 @@ function makePuzzle(){
 const COLORS=['#e0b83a','#c84a5c','#6fb6e0','#3fb2a0','#b3e08f','#f4a6cf','#f4a066','#8a63c9','#a9bdd4'];
 const KEY='mochidoku-v2', LIVES=3, SCORE_CAT=1000;
 const $=s=>document.querySelector(s);
-// The pup is the same 🐶 as the bottom button
-const DOG='<span class="dog">🐶</span>';
+// The pup sprite is the same dog as the bottom button
+const DOG='<img class="dog" src="dog.png" alt="pup" draggable="false">';
 const XS=c=>'<svg class="x" viewBox="0 0 20 20"><path d="M4 4l12 12M16 4L4 16" stroke="'+c+'" stroke-width="3.6" stroke-linecap="round"/></svg>';
 
 // mk: 0 empty, 1 X, 2 pup, 3 wrong guess
 let S;
 function fresh(level,pw){
+  N=sizeFor(level);
   const p=makePuzzle();
-  return{reg:p.reg,sol:p.sol,mk:Array(81).fill(0),lives:LIVES,score:0,level,over:false,hist:[],
+  return{reg:p.reg,sol:p.sol,mk:Array(N*N).fill(0),lives:LIVES,score:0,level,over:false,hist:[],
     pw:pw||{cat:3,hint:5,undo:5}};
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.reg&&j.reg.length===81){S=j;return true}}catch(e){}return false}
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY));const n=j&&j.reg&&Math.round(Math.sqrt(j.reg.length));if(n>=4&&n<=9&&n*n===j.reg.length){N=n;S=j;return true}}catch(e){}return false}
 function say(t){$('#msg').textContent=t}
 
 // ---------- board ----------
 const board=$('#board'),chips=$('#chips');
-for(let i=0;i<81;i++){const d=document.createElement('div');d.className='c';d.dataset.i=i;board.appendChild(d)}
-for(let g=0;g<N;g++){const d=document.createElement('div');d.className='chip';d.style.background=COLORS[g];chips.appendChild(d)}
+function buildBoard(){
+  board.innerHTML='';chips.innerHTML='';
+  board.style.gridTemplateColumns=board.style.gridTemplateRows='repeat('+N+',minmax(0,1fr))';
+  for(let i=0;i<N*N;i++){const d=document.createElement('div');d.className='c';d.dataset.i=i;board.appendChild(d)}
+  for(let g=0;g<N;g++){const d=document.createElement('div');d.className='chip';d.style.background=COLORS[g];chips.appendChild(d)}
+}
 
 function render(pop){
+  if(board.children.length!==N*N)buildBoard();
   $('#level').textContent=S.level;
   $('#score').textContent=S.score;
   $('#lives').innerHTML='🦴'.repeat(S.lives)+'<span class="lost">'+'🦴'.repeat(LIVES-S.lives)+'</span>';
@@ -222,7 +231,7 @@ function push(){S.hist.push({mk:S.mk.slice(),score:S.score});if(S.hist.length>20
 
 function autoX(i){
   const r=i/N|0,c=i%N,g=S.reg[i];
-  for(let k=0;k<81;k++){
+  for(let k=0;k<N*N;k++){
     if(S.mk[k]!==0)continue;
     const kr=k/N|0,kc=k%N;
     if(kr===r||kc===c||S.reg[k]===g||(Math.abs(kr-r)<=1&&Math.abs(kc-c)<=1))S.mk[k]=1;
@@ -269,7 +278,7 @@ function weakestRegion(){
   for(let g=0;g<N;g++){
     const cell=S.sol.find(i=>S.reg[i]===g);
     if(S.mk[cell]===2)continue;
-    let n=0;for(let i=0;i<81;i++)if(S.reg[i]===g&&S.mk[i]===0)n++;
+    let n=0;for(let i=0;i<N*N;i++)if(S.reg[i]===g&&S.mk[i]===0)n++;
     if(n<bestN||(n===bestN&&Math.random()<.5)){best=g;bestN=n}
   }
   return best;
@@ -300,7 +309,7 @@ function win(){
   S.over=true;S.score+=S.lives*500;save();render();
   $('#dlgText').textContent='🎉 Level '+S.level+' solved!  Score '+S.score;
   $('#dlgBtn').textContent='Next level';
-  $('#dlgBtn').onclick=()=>{$('#dlg').close();S=fresh(S.level+1,S.pw);save();render();say('')};
+  $('#dlgBtn').onclick=()=>{$('#dlg').close();S=fresh(S.level+1,S.pw);save();render();say(N<9?'New grid: '+N+'×'+N+' 🐾':'Full size grid: 9×9 🐾')};
   $('#dlg').showModal();
 }
 function lose(){
@@ -311,7 +320,7 @@ function lose(){
   $('#dlg').showModal();
 }
 function restart(){
-  S.mk=Array(81).fill(0);S.lives=LIVES;S.score=0;S.over=false;S.hist=[];
+  S.mk=Array(N*N).fill(0);S.lives=LIVES;S.score=0;S.over=false;S.hist=[];
   save();render();say('');
 }
 $('#resetBtn').onclick=()=>{if(confirm('Restart this puzzle?'))restart()};

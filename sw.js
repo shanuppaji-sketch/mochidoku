@@ -1,5 +1,5 @@
-const CACHE = 'mochidoku-v10';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE = 'mochidoku-v11';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './dog.png'];
 
 // Precache straight from the network, never from the HTTP cache (GitHub Pages sends max-age=600)
 self.addEventListener('install', e => {
