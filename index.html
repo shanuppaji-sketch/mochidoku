@@ -42,6 +42,9 @@ header{width:100%;display:flex;align-items:center;justify-content:space-between}
 .pw .dogbtn{width:42px;height:42px;object-fit:contain;vertical-align:middle}
 .pw span{position:absolute;top:-4px;right:-6px;background:#e5484d;color:#fff;font-size:13px;font-weight:700;border-radius:12px;min-width:24px;text-align:center;padding:2px 6px}
 .pw.zero button{opacity:.4}
+#tip{width:100%;background:var(--card);border-radius:14px;padding:10px 12px;font-size:14px;line-height:1.4;box-shadow:0 2px 6px #0001;display:flex;gap:10px;align-items:center}
+#tip p{margin:0;flex:1}
+#tip button{border:0;border-radius:10px;padding:8px 12px;font:inherit;font-weight:700;background:#f4a066;color:#fff}
 #msg{min-height:20px;font-size:14px;text-align:center}
 dialog{border:0;border-radius:18px;background:var(--card);color:var(--ink);text-align:center;padding:26px 30px}
 dialog::backdrop{background:#0006}
@@ -63,6 +66,7 @@ dialog button{margin-top:14px;border:0;border-radius:12px;padding:10px 18px;font
     <div>1 pup per row &amp; column</div>
     <div>Pups can't touch</div>
   </div>
+  <div id="tip" hidden><p><b>👆 Tap</b> a square to mark ✕ — no pup there.<br><b>👆👆 Double-tap</b> to check if a pup is there.</p><button id="tipOk">Got it</button></div>
   <div id="chips"></div>
   <div id="board"></div>
   <div id="msg"></div>
@@ -193,6 +197,10 @@ function fresh(level,pw){
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const j=JSON.parse(localStorage.getItem(KEY));const n=j&&j.reg&&Math.round(Math.sqrt(j.reg.length));if(n>=4&&n<=9&&n*n===j.reg.length){N=n;S=j;return true}}catch(e){}return false}
+// first-run coaching: only on the very first beginner (5x5, level 1) game, until dismissed or solved
+const TIPKEY='mochidoku-tip-done';
+function tipDone(){try{return !!localStorage.getItem(TIPKEY)}catch(e){return false}}
+function endTip(){try{localStorage.setItem(TIPKEY,'1')}catch(e){}$('#tip').hidden=true}
 function say(t){$('#msg').textContent=t}
 
 // ---------- board ----------
@@ -206,6 +214,7 @@ function buildBoard(){
 
 function render(pop){
   if(board.children.length!==N*N)buildBoard();
+  $('#tip').hidden=!(S.level===1&&N<9&&!tipDone());
   $('#level').textContent=S.level;
   $('#score').textContent=S.score;
   $('#lives').innerHTML='🦴'.repeat(S.lives)+'<span class="lost">'+'🦴'.repeat(LIVES-S.lives)+'</span>';
@@ -306,6 +315,7 @@ $('#pwUndo').onclick=()=>{
 };
 
 function win(){
+  endTip();
   S.over=true;S.score+=S.lives*500;save();render();
   $('#dlgText').textContent='🎉 Level '+S.level+' solved!  Score '+S.score;
   $('#dlgBtn').textContent='Next level';
@@ -323,6 +333,7 @@ function restart(){
   S.mk=Array(N*N).fill(0);S.lives=LIVES;S.score=0;S.over=false;S.hist=[];
   save();render();say('');
 }
+$('#tipOk').onclick=endTip;
 $('#resetBtn').onclick=()=>{if(confirm('Restart this puzzle?'))restart()};
 $('#newBtn').onclick=()=>{if(confirm('Skip to a new puzzle?')){S=fresh(S.level,S.pw);save();render();say('')}};
 
