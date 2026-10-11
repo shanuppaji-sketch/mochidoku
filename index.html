@@ -181,7 +181,8 @@ function makePuzzle(){
 // ---/gen---
 
 const COLORS=['#e0b83a','#c84a5c','#6fb6e0','#3fb2a0','#b3e08f','#f4a6cf','#f4a066','#8a63c9','#a9bdd4'];
-const KEY='mochidoku-v2', LIVES=3, SCORE_CAT=1000;
+const KEY='mochidoku-v2', LIVES=3, SCORE_CAT=1000, START_TIPS=10;
+const DAYKEY='mochidoku-last-day';
 const $=s=>document.querySelector(s);
 // The pup sprite is the same dog as the bottom button
 const DOG='<img class="dog" src="dog.png" alt="pup" draggable="false">';
@@ -193,7 +194,7 @@ function fresh(level,pw){
   N=sizeFor(level);
   const p=makePuzzle();
   return{reg:p.reg,sol:p.sol,mk:Array(N*N).fill(0),lives:LIVES,score:0,level,over:false,hist:[],
-    pw:pw||{cat:3,hint:5,undo:5}};
+    pw:pw||{cat:START_TIPS,hint:START_TIPS,undo:5}};
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const j=JSON.parse(localStorage.getItem(KEY));const n=j&&j.reg&&Math.round(Math.sqrt(j.reg.length));if(n>=4&&n<=9&&n*n===j.reg.length){N=n;S=j;return true}}catch(e){}return false}
@@ -362,8 +363,20 @@ board.addEventListener('pointerup',endDrag);
 board.addEventListener('pointercancel',endDrag);
 
 if(!load())S=fresh(1);
+// daily visit bonus: +1 pup & +1 hint the first time the app opens on a new calendar day.
+// A player with no recorded day predates this feature: lift their tips to the new starting level once.
+function dailyBonus(){
+  const d=new Date(),today=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+  let last=null;try{last=localStorage.getItem(DAYKEY)}catch(e){}
+  if(last===today)return '';
+  try{localStorage.setItem(DAYKEY,today)}catch(e){return ''}
+  if(!last){S.pw.cat=Math.max(S.pw.cat,START_TIPS);S.pw.hint=Math.max(S.pw.hint,START_TIPS);save();return ''}
+  S.pw.cat++;S.pw.hint++;save();
+  return '🎉 Welcome back — thanks for playing on a new day! +1 pup 🐾 and +1 hint 💡';
+}
+const bonusMsg=dailyBonus();
 render();
-say('Tap or drag to mark ✕ · double-tap to place a pup.');
+say(bonusMsg||'Tap or drag to mark ✕ · double-tap to place a pup.');
 if('serviceWorker' in navigator){
   // when a new version takes over, reload once so the player sees it right away
   const hadController=!!navigator.serviceWorker.controller;let reloaded=false;
